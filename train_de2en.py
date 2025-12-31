@@ -49,12 +49,12 @@ def eval(model, loss_fn, test_dataloader, device):
             # compute accuracy
             pred = model_out.argmax(dim=-1)
             mask = (tgt_y != pad_id)
-            total_correct += (pred[mask] == tgt_y[mask]).sum().item()
-            total_count += mask.sum().item()
+            acc = (pred[mask] == tgt_y[mask]).float().item()
+            accs.append(acc)
     
     # calcualte average loss and jaccard score
     test_loss /= n_batches
-    avg_score = total_correct / max(1, total_count)
+    avg_score = np.concatenate(accs).mean()
     print(f"Test Error: \n Score: {(avg_score):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 def greedy_decode(model, src, src_pad_mask, bos_id, eos_id, max_len):
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     optimizer = Adam(model.parameters(), lr=3e-4)
     loss = nn.CrossEntropyLoss(ignore_index=pad_id)
 
-    n_epochs = 1
+    n_epochs = 20
     for _ in range(n_epochs):
         train_one_epoch(model, loss, optimizer, train_loader, device)
         eval(model, loss, test_loader, device)
