@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MyFirstTransformer(nn.Module):
-    def __init__(self, vocab_size, d_model=256, context_limit=8_000, n_layers=6, n_heads=4, dropout=0.01):
+    def __init__(self, vocab_size, d_model=256, context_limit=256, n_layers=6, n_heads=4, dropout=0.1):
         assert d_model % n_heads == 0, "number of attention heads must be divisible by dimensionality of model embeddings"
         super(MyFirstTransformer, self).__init__()
         self.vocab_size = vocab_size
@@ -37,12 +37,10 @@ class MyFirstTransformer(nn.Module):
         tgt_x = self.drop(tgt_x)
 
         memory = self.encoder(src_x, src_pad_mask=src_pad_mask)
-        dec = self.decoder(
-            tgt_x,
+        dec = self.decoder(tgt_x,
             memory,
             tgt_pad_mask=tgt_pad_mask,
             src_pad_mask=src_pad_mask,
-            causal=True
         )
         out = self.final_ln(dec)
         out = self.lm_head(out)

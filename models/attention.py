@@ -49,7 +49,7 @@ class MultiHeadAttention(nn.Module):
         v = self._split_heads(self.Wv(kv))  # (B, H, Tk, Dh)
 
         # attention logits: (B, H, Tq, Tk)
-        attn_logits = (q @ k.transpose(-2, -1)) / math.sqrt(self.dh_head)
+        attn_logits = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)
 
         # key padding mask: mask keys (Tk dimension)
         if key_pad_mask is not None:

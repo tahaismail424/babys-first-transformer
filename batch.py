@@ -1,4 +1,4 @@
-from .utils import RANDOM_STATE
+from utils import RANDOM_STATE
 import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
@@ -19,7 +19,6 @@ class IWSTLDataset(Dataset):
             tokenizer_merges_path: str = "tokenizer/data/merges.txt",
             objective: TrainingObjective = "seq2seq", 
             set: SetType = "train",
-            device = "cpu",
             context_limit=256,
             train_size=0.8, 
             random_state=RANDOM_STATE,
@@ -50,7 +49,7 @@ class IWSTLDataset(Dataset):
             pad_len = L - x.numel()
             return F.pad(x, (0, pad_len), value=pad_id)
 
-        for _, row in sentence_df.iterrows():
+        for _, row in set_sentences.iterrows():
             # pick English for simplicity
             text = row.translation["en"]
 

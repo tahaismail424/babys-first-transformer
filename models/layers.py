@@ -52,7 +52,7 @@ class DecoderLayer(nn.Module):
     
     def forward(self, x, memory, tgt_pad_mask=None, src_pad_mask=None):
         # masked self-attention
-        x = x + self.self_attn(self.ln1(x), kv=None, key_pad_mask=tgt_pad_mask, causal=False)
+        x = x + self.self_attn(self.ln1(x), kv=None, key_pad_mask=tgt_pad_mask, causal=True)
         # cross attention: queries fromm decoder, keys/values from encoder memory
         x = x + self.cross_attn(self.ln2(x), kv=memory, key_pad_mask=src_pad_mask, causal=False)
         # MLP
