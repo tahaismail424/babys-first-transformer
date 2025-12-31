@@ -28,11 +28,12 @@ class IWSTLDataset(Dataset):
 
         # load tokenizer
         tokenizer = RustBPETokenizer(tokenizer_vocab_path, tokenizer_merges_path)
-        pad_id = tokenizer.special_ids()["pad"]
+        special_ids = tokenizer.special_ids()
+        eos_id, pad_id = special_ids["eos"], special_ids["pad"]
 
         # train test split
         indices = np.arange(len(sentence_df))
-        train_idx, test_idx =  train_test_split(indices, train_size=train_size, random_state=random_state)
+        train_idx, test_idx = train_test_split(indices, train_size=train_size, random_state=random_state)
 
         if set == "train":
             set_sentences = sentence_df.iloc[train_idx].reset_index(drop=True)
@@ -50,19 +51,40 @@ class IWSTLDataset(Dataset):
             return F.pad(x, (0, pad_len), value=pad_id)
 
         for _, row in set_sentences.iterrows():
-            # pick English for simplicity
-            text = row.translation["en"]
+            if objective == "seq2seq":
+                text = row.translation["en"]
+            elif objective == "de2en":
+                text = row.translation["de"]
+            else:
+                text = row.translation["en"]
 
             ids = tokenizer.encode(text)
             ids = torch.tensor(ids, dtype=torch.long)
 
             # ensure <= context_limit
             ids = ids[:context_limit]
+            ids[-1] = eos_id
 
             src = pad_to(ids, context_limit)
 
-            tgt_in = pad_to(src[:-1], context_limit)
-            tgt_out = pad_to(src[1:], context_limit)
+            if objective == "seq2seq":
+                tgt_text = text
+            elif objective == "de2en":
+                tgt_text = row.translation["en"]
+            else:
+                tgt_text = row.translation["de"]
+
+            ids = tokenizer.encode(tgt_text)
+            ids = torch.tensor(ids, dtype=torch.long)
+
+            # ensure <= context_limit
+            ids = ids[:context_limit]
+            ids[-1] = eos_id
+
+            tgt = pad_to(ids, context_limit)
+
+            tgt_in = pad_to(tgt[:-1], context_limit)
+            tgt_out = pad_to(tgt[1:], context_limit)
 
             src_pad_mask = (src == pad_id)
             tgt_pad_mask = (tgt_in == pad_id)

@@ -35,7 +35,7 @@ def eval(model, loss_fn, test_dataloader, device):
     model.eval()
     n_batches = len(test_dataloader)
     test_loss = 0
-    accs = []
+    total_correct, total_count = 0, 0
 
     with torch.no_grad():
         for src_x, tgt_x, tgt_y, src_pad, tgt_pad in test_dataloader:
@@ -57,23 +57,29 @@ def eval(model, loss_fn, test_dataloader, device):
     avg_score = total_correct / max(1, total_count)
     print(f"Test Error: \n Score: {(avg_score):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
-def greedy_decode(model, src, src_pad_mask, bos_id, eos_id, max_len):
-    model.eval()
+@torch.no_grad()
+def greedy_decode(model, src, src_pad_mask, bos_id, eos_id, max_len, pad_id=None):
+    device = src.device
     B = src.size(0)
-    tgt = torch.full((B, 1), bos_id, dtype=torch.long, device=src.device)
+    tgt = torch.full((B, 1), bos_id, dtype=torch.long, device=device)
+
+    finished = torch.zeros(B, dtype=torch.bool, device=device)
 
     for _ in range(max_len - 1):
-        tgt_pad_mask = (tgt == pad_id)  # usually all False until you pad
+        tgt_pad_mask = (tgt == pad_id) if pad_id is not None else None
         logits = model(src, tgt, src_pad_mask=src_pad_mask, tgt_pad_mask=tgt_pad_mask)
-        next_logits = logits[:, -1, :]           # (B, V)
-        next_id = next_logits.argmax(dim=-1, keepdim=True)  # (B, 1)
-        tgt = torch.cat([tgt, next_id], dim=1)
+        next_id = logits[:, -1, :].argmax(dim=-1)  # (B,)
 
-        if (next_id == eos_id).all():
+        # once finished, keep emitting EOS (or PAD) so sequence stays stable
+        next_id = torch.where(finished, torch.full_like(next_id, eos_id), next_id)
+
+        tgt = torch.cat([tgt, next_id[:, None]], dim=1)
+        finished |= (next_id == eos_id)
+
+        if finished.all():
             break
 
     return tgt
-
 
 def sample_predictions(model, tokenizer, sentence_samples, bos_id, pad_id, eos_id, device, context_limit=256):
     def pad_to(x, L):
@@ -104,7 +110,12 @@ def sample_predictions(model, tokenizer, sentence_samples, bos_id, pad_id, eos_i
 
     pred_targets = greedy_decode(model, src, src_pad_mask, bos_id, eos_id, context_limit)
     for i in range(pred_targets.shape[0]):
-        print("Actual sentence:", sentence_samples[i], "predicted sentence:", tokenizer.decode(pred_targets[i].tolist()))
+        sentence_tokens = pred_targets[i]
+        if eos_id in sentence_tokens:
+            sentence_tokens = sentence_tokens[:sentence_tokens.index(eos_id) + 1]
+        pred_sentence = tokenizer.decode(sentence_tokens.tolist())
+        
+        print("Actual sentence:", sentence_samples[i], "predicted sentence:", pred_sentence)
 
 if __name__ == "__main__":
     # load our datasets
