@@ -110,10 +110,10 @@ def sample_predictions(model, tokenizer, sentence_samples, bos_id, pad_id, eos_i
 
     pred_targets = greedy_decode(model, src, src_pad_mask, bos_id, eos_id, context_limit)
     for i in range(pred_targets.shape[0]):
-        sentence_tokens = pred_targets[i]
+        sentence_tokens = pred_targets[i].tolist()
         if eos_id in sentence_tokens:
             sentence_tokens = sentence_tokens[:sentence_tokens.index(eos_id) + 1]
-        pred_sentence = tokenizer.decode(sentence_tokens.tolist())
+        pred_sentence = tokenizer.decode(sentence_tokens)
         
         print("Actual sentence:", sentence_samples[i], "predicted sentence:", pred_sentence)
 
