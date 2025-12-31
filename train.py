@@ -26,7 +26,8 @@ def train_one_epoch(model, loss_fn, optimizer, train_dataloader, device):
         optimizer.step()
 
         # print progress for batch
-        print(f"Batch [{batch_idx+1}/{len(train_dataloader)}], Loss: {loss.item():.4f}")
+        if batch_idx % 1000 == 0:
+            print(f"Batch [{batch_idx+1}/{len(train_dataloader)}], Loss: {loss.item():.4f}")
 
 def eval(model, loss_fn, test_dataloader, device):
     # set model to eval
@@ -111,8 +112,8 @@ if __name__ == "__main__":
     test_set = IWSTLDataset(set="test")
 
     # add to dataloaders
-    train_loader = DataLoader(train_set, batch_size=8, shuffle=True)
-    test_loader = DataLoader(test_set, batch_size=8)
+    train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=32)
 
     # load tokenizer to get vocab size
     print("loading tokenizer")
