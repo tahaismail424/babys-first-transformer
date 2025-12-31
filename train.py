@@ -106,14 +106,16 @@ def sample_predictions(model, tokenizer, sentence_samples, bos_id, pad_id, eos_i
 
 if __name__ == "__main__":
     # load our datasets
+    print("loading datasets")
     train_set = IWSTLDataset(set="train")
     test_set = IWSTLDataset(set="test")
 
     # add to dataloaders
-    train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_set, batch_size=64)
+    train_loader = DataLoader(train_set, batch_size=8, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=8)
 
     # load tokenizer to get vocab size
+    print("loading tokenizer")
     tokenizer = RustBPETokenizer("tokenizer/data/vocab.json", "tokenizer/data/merges.txt")
     vocab_size = tokenizer.vocab_size()
     special_ids = tokenizer.special_ids()
@@ -123,6 +125,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # do training loop
+    print("starting training")
     model = MyFirstTransformer(vocab_size).to(device)
     optimizer = Adam(model.parameters(), lr=3e-4)
     loss = nn.CrossEntropyLoss(ignore_index=pad_id)
