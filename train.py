@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from torch.optim import Adam
+from datetime import datetime
 
 def train_one_epoch(model, loss_fn, optimizer, train_dataloader, device):
     model.train()
@@ -26,7 +27,7 @@ def train_one_epoch(model, loss_fn, optimizer, train_dataloader, device):
         optimizer.step()
 
         # print progress for batch
-        if batch_idx % 1000 == 0:
+        if batch_idx % 200 == 0:
             print(f"Batch [{batch_idx+1}/{len(train_dataloader)}], Loss: {loss.item():.4f}")
 
 def eval(model, loss_fn, test_dataloader, device):
@@ -131,7 +132,7 @@ if __name__ == "__main__":
     optimizer = Adam(model.parameters(), lr=3e-4)
     loss = nn.CrossEntropyLoss(ignore_index=pad_id)
 
-    n_epochs = 100
+    n_epochs = 20
     for _ in range(n_epochs):
         train_one_epoch(model, loss, optimizer, train_loader, device)
         eval(model, loss, test_loader, device)
@@ -144,5 +145,9 @@ if __name__ == "__main__":
     ]
 
     sample_predictions(model, tokenizer, sentence_samples, bos_id, pad_id, eos_id, device)
+
+    # save model
+    torch.save(model.state_dict(), f"data/weights/transformer_seq2seq_{datetime.now().isoformat()}.pth")
+
 
 
