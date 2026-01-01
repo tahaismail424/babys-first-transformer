@@ -55,7 +55,7 @@ def eval(model, loss_fn, test_dataloader, device):
     # calcualte average loss and jaccard score
     test_loss /= n_batches
     avg_score = total_correct / max(1, total_count)
-    print(f"Test Error: \n Score: {(avg_score):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    print(f"Test Error: \n Score: {(avg_score*100):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
 @torch.no_grad()
 def greedy_decode(model, src, src_pad_mask, bos_id, eos_id, max_len, pad_id=None):
